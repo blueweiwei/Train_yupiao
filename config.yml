@@ -1,0 +1,18 @@
+apis:
+  email_api: 'http://123.60.0.184:81/obj/email/'
+users:
+  - user:
+      # full_train_code 车次号 必填 大小写区分
+      full_train_code: K179
+      # trainDate 发车日期 格式 2021-03-01
+      trainDate: '2021-02-28'
+      # from_station_name 始发站
+      from_station_name: 安阳
+      #to_station_name 终点站 
+      to_station_name: 郑州
+      #seat_type_name 无座 硬座 硬卧 软卧  
+      seat_type_name: 硬座
+      #email 接受通知消息的邮箱
+      email: 911910145@qq.com
+      #seat_yupiao 大于余票数发消息 默认值为0
+      seat_yupiao: 0
