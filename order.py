@@ -27,6 +27,7 @@ import bs4
 import time
 import sys
 import yaml
+from email_sender import send_email
 
 headers = {
     "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) A'
@@ -53,11 +54,13 @@ def getYmlConfig(yaml_file='./config.yml'):
     config = yaml.load(file_data, Loader=yaml.FullLoader)
     return dict(config)
 
+# 获取当前时间
 def getLocalTime():
     timeStamp = int(time.time())
     timeArray = time.localtime(timeStamp)
     return time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
 
+# 根据station字典获取车站名称
 def getStation(name):
     station_name = {}
     name_station = {}
@@ -70,25 +73,25 @@ def getStation(name):
         name_station[temps[1][:-1]] = temps[0]
     return station_name[name]
 
+# 消息通知
 def sendMes(tomail,text):
-    data={
-        'tomail':tomail,
-        'title':'--火车票余票通知--',
-        'con':text
-    }
-    res=requests.post(url=config['apis']['email_api'],data=data)
-    return res
+    smtpCon=config['apis']['smtp']
+    subject='--火车票余票通知--'
+    send_email(tomail, subject, text, smtpCon)
 
+# 接口查询车票信息
 def search(departureStation,arrivalStation,dateTime,trainCode,seatTypeName):
     url='https://i.meituan.com/uts/train/train/querytripnew?fromPC=1' \
         '&train_source=meituanpc@wap&uuid=a2bab8b38b364d7f8d7a.1590661315.1.0.0' \
         '&from_station_telecode={}&to_station_telecode={}&yupiaoThreshold=0&start_date={}' \
         '&isStudentBuying=false'.format(getStation(departureStation), getStation(arrivalStation), dateTime)
+    print(url)
     response=requests.get(url,headers=headers).json()
     # print('当前时间为：'+getLocalTime()+'\n火车查询区间--始发站：'+departureStation+'    终点站:'+arrivalStation+'\n预定车次为:'+trainCode)
     seats_info = {}
     for train in response['data']['trains']:
         if(train['full_train_code']==trainCode):
+            print(train['seats'])
             for seats in train['seats']:
                 seats_info['now_time']=getLocalTime()
                 seats_info['train_code']=train['full_train_code']  
@@ -123,15 +126,10 @@ def getResult():
 
 if __name__ == '__main__':
     mes= getResult()
-    # print(mes)
     email = config['users'][0]['user']['email']
     if mes['mess']=='true':
         text=model.format(mes['now_time'],mes['train_code'],mes['start_time'],mes['arrive_time'],mes['run_time'],mes['from_station_name'],mes['to_station_name'],mes['seat_type_name'],mes['seat_min_price'],mes['seat_yupiao'])
-        # print(text)
-        # sendMes(email,text)
+        sendMes(email,text)
         print('email send success !')
     else:
         print('当前火车车次余票未达到预期')
-        
-    # print(text)
-    # 
